@@ -16,6 +16,7 @@ def build_magnet(res):
 
 
 seen = []
+trz = {}
 with open(sys.argv[1], 'r+') as f:
     data = mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ)
     i = -1
@@ -23,8 +24,8 @@ with open(sys.argv[1], 'r+') as f:
     while True:
         i += 1
         same = []
-        trs = []
         dns = []
+        trs = []
         while True:
             line = data.readline().decode('utf-8')
             if line.strip() == '':
@@ -43,7 +44,13 @@ with open(sys.argv[1], 'r+') as f:
             if "tr" in t.keys():
                 trs += t["tr"]
         dn = "||".join(dns)
-        joined = {"xt": same[-1]["xt"], "dn": dn, "tr": list(set(trs))}
+        trs = list(set(trs))
+        for tr in trs:
+            if tr in trz.keys():
+                trz[tr] += 1
+            else:
+                trz[tr] = 1
+        joined = {"xt": same[-1]["xt"], "dn": dn, "tr": trs}
         if joined["xt"] not in seen:
             sys.stdout.write(build_magnet(joined)+'\n')
             seen.append(joined["xt"])
@@ -52,3 +59,5 @@ with open(sys.argv[1], 'r+') as f:
             seen.append(res["xt"])
         if (i % 1000) == 0:
             gc.collect()
+
+open('trs', 'w').write('\n'.join(['\t'.join(reversed([str(y) for y in x])) for x in trz.items()]))
