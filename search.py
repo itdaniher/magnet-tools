@@ -13,4 +13,4 @@ print(query)
 results = searcher.search(query, limit=None)
 print(results)
 for result in results:
-    print(result['title'], '\n\t', urllib.parse.unquote(result['content']))
+    print(result['title'], '\n\t', result['content'])
