@@ -21,15 +21,21 @@ with open(sys.argv[1], 'r+') as f:
     data = mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ)
     i = -1
     done = False
+    lastline = None
+    break_count = 0
     while True:
         i += 1
         same = []
         dns = []
         trs = []
         while True:
-            line = data.readline().decode('utf-8')
+            if lastline == None:
+                line = data.readline().decode('utf-8')
+            else:
+                line = lastline
+                lastline = None
             if line.strip() == '':
-                break
+                break_count += 1
             res = urllib.parse.parse_qs(line[lm:-1])
             if "xt" not in res.keys():
                 raise Exception(res)
@@ -37,12 +43,14 @@ with open(sys.argv[1], 'r+') as f:
             if (len(same) == 0) or (res["xt"] == same[-1]["xt"]):
                 same += [res]
             else:
+                lastline = line
                 break
         for t in same:
             if "dn" in t.keys() and ((len(dns) == 0) or (t["dn"][0] != dns[-1])):
                 dns += t["dn"]
             if "tr" in t.keys():
                 trs += t["tr"]
+        dns = list(set(dns))
         dn = "||".join(dns)
         trs = list(set(trs))
         for tr in trs:
@@ -53,11 +61,10 @@ with open(sys.argv[1], 'r+') as f:
         joined = {"xt": same[-1]["xt"], "dn": dn, "tr": trs}
         if joined["xt"] not in seen:
             sys.stdout.write(build_magnet(joined)+'\n')
-            seen.append(joined["xt"])
-        if res["xt"] not in seen:
-            sys.stdout.write(build_magnet(res)+'\n')
-            seen.append(res["xt"])
+            sys.stdout.flush()
         if (i % 1000) == 0:
             gc.collect()
+        if break_count > 10:
+            break
 
 open('trs', 'w').write('\n'.join(['\t'.join(reversed([str(y) for y in x])) for x in trz.items()]))
