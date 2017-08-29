@@ -47,7 +47,7 @@ with open(sys.argv[1], 'r+') as f:
                 break
         for t in same:
             if "dn" in t.keys() and ((len(dns) == 0) or (t["dn"][0] != dns[-1])):
-                for dn in t["dn"].split("||"):
+                for dn in t["dn"][0].split("||"):
                     dns += dn
             if "tr" in t.keys():
                 trs += t["tr"]
