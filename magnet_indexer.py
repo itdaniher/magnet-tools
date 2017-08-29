@@ -22,11 +22,11 @@ with open(sys.argv[1], 'r+') as f:
     while True:
         i += 1
         line = data.readline()
+        if not line.strip():
+            break
         res = urllib.parse.parse_qs(line[lm:-1].decode('utf-8'))
         if i % 1000 == 0:
+            writer.commit()
             print(i)
-        try:
-            writer.add_document(title=res["dn"][0] + " " + res["xt"][0], content=line.strip().decode('utf-8'), infohash=res["xt"][0])
-        except:
-            break
-writer.commit()
+        writer.add_document(title=res["dn"][0] + " " + res["xt"][0], content=line.strip().decode('utf-8'), infohash=res["xt"][0])
+    writer.commit()
