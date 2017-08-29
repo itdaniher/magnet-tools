@@ -23,9 +23,10 @@ with open(sys.argv[1], 'r+') as f:
         i += 1
         line = data.readline()
         res = urllib.parse.parse_qs(line[lm:-1].decode('utf-8'))
+        if i % 1000 == 0:
+            print(i)
         try:
             writer.add_document(title=res["dn"][0] + " " + res["xt"][0], content=line.strip().decode('utf-8'), infohash=res["xt"][0])
         except:
             break
-    print(i)
 writer.commit()
