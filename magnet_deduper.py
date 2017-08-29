@@ -22,7 +22,6 @@ with open(sys.argv[1], 'r+') as f:
     i = -1
     done = False
     lastline = None
-    break_count = 0
     while True:
         i += 1
         same = []
@@ -35,10 +34,10 @@ with open(sys.argv[1], 'r+') as f:
                 line = lastline
                 lastline = None
             if line.strip() == '':
-                break_count += 1
+                break
             res = urllib.parse.parse_qs(line[lm:-1])
             if "xt" not in res.keys():
-                raise Exception(res)
+                break
             res["xt"] = res["xt"][0].lower()
             if (len(same) == 0) or (res["xt"] == same[-1]["xt"]):
                 same += [res]
@@ -47,8 +46,11 @@ with open(sys.argv[1], 'r+') as f:
                 break
         for t in same:
             if "dn" in t.keys() and ((len(dns) == 0) or (t["dn"][0] != dns[-1])):
-                for dn in t["dn"][0].split("||"):
-                    dns += dn
+                if "||" in t["dn"][0]:
+                    for dn in t["dn"][0].split("||"):
+                        dns += dn
+                else:
+                    dns += t["dn"]
             if "tr" in t.keys():
                 trs += t["tr"]
         dn = "||".join(list(set(dns)))
@@ -58,13 +60,13 @@ with open(sys.argv[1], 'r+') as f:
                 trz[tr] += 1
             else:
                 trz[tr] = 1
-        joined = {"xt": same[-1]["xt"], "dn": dn, "tr": trs}
+        if len(same) == 0:
+            break
+        joined = {"xt": same[-1]["xt"], "dn": dn, "tr": trs[0:7]}
         if joined["xt"] not in seen:
             sys.stdout.write(build_magnet(joined)+'\n')
             sys.stdout.flush()
         if (i % 1000) == 0:
             gc.collect()
-        if break_count > 10:
-            break
 
 open('trs', 'w').write('\n'.join(['\t'.join(reversed([str(y) for y in x])) for x in trz.items()]))
