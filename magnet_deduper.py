@@ -1,22 +1,27 @@
-import sys, mmap, gc, urllib.parse
+import sys, mmap, gc, re, urllib.parse
 
 m = 'magnet:?'
 lm = len(m)
 
+dead_regex = '|'.join([x.strip() for x in open('trz_dead').read().split('\n') if x and '#' not in x]).replace('.','\\.')
+dead_regex = re.compile(dead_regex)
+
 def build_magnet(res):
     if "dn" in res.keys():
-        magnet = m+urllib.parse.urlencode({"xt": res["xt"], "dn": ''.join(res["dn"])})
+        magnet = m+urllib.parse.urlencode({"xt": res["xt"]})+"&"+urllib.parse.urlencode({"dn": ''.join(res["dn"])})
     else:
         magnet = m+urllib.parse.urlencode({"xt": res["xt"]})
     magnet = magnet.replace("urn%3Abtih%3A", "urn:btih:")
-    if 'tr' in res.keys():
-        for tr in res['tr']:
+    for tr in res["tr"]:
+        if 'tr' in res.keys():
             magnet += "&"+urllib.parse.urlencode({"tr":tr})
     return magnet
 
 
 seen = []
 trz = {}
+common_trackers = [x for x in open('trz').read().split('\n') if x]
+
 with open(sys.argv[1], 'r+') as f:
     data = mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ)
     i = -1
@@ -55,14 +60,18 @@ with open(sys.argv[1], 'r+') as f:
                 trs += t["tr"]
         dn = "||".join(list(set(dns)))
         trs = list(set(trs))
+        trs_ok = []
         for tr in trs:
-            if tr in trz.keys():
-                trz[tr] += 1
-            else:
-                trz[tr] = 1
+            if dead_regex.findall(tr) != []:
+                trs_ok.append(tr)
+                if tr in trz.keys():
+                    trz[tr] += 1
+                else:
+                    trz[tr] = 1
         if len(same) == 0:
             break
-        joined = {"xt": same[-1]["xt"], "dn": dn, "tr": trs[0:7]}
+        trs_ok += common_trackers
+        joined = {"xt": same[-1]["xt"], "dn": dn, "tr": trs_ok[0:4]}
         if joined["xt"] not in seen:
             sys.stdout.write(build_magnet(joined)+'\n')
             sys.stdout.flush()
