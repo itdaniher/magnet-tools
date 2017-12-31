@@ -53,9 +53,9 @@ with open(sys.argv[1], 'r+') as f:
             if "dn" in t.keys() and ((len(dns) == 0) or (t["dn"][0] != dns[-1])):
                 if "||" in t["dn"][0]:
                     for dn in t["dn"][0].split("||"):
-                        dns += dn
+                        dns += [dn.strip()]
                 else:
-                    dns += t["dn"]
+                    dns += [t["dn"][0].strip()]
             if "tr" in t.keys():
                 trs += t["tr"]
         dn = "||".join(list(set(dns)))
