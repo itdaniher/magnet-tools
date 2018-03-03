@@ -4,10 +4,7 @@ m = 'magnet:?'
 lm = len(m)
 
 def build_magnet(res):
-    if "dn" in res.keys():
-        magnet = m+urllib.parse.urlencode({"xt": res["xt"], "dn": res['dn']})
-    else:
-        magnet = m+urllib.parse.urlencode({"xt": res["xt"]})
+    magnet = m+urllib.parse.urlencode({"xt": 'urn:btih:'+res["xt"], "dn": res['dn']})
     magnet = magnet.replace("urn%3Abtih%3A", "urn:btih:")
     if 'tr' in res.keys():
         for tr in res['tr']:
